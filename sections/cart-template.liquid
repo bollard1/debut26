@@ -271,6 +271,10 @@
               {%- endif -%}
             {%- endcapture -%}
             <!-- <div class="cart__shipping rte">{{ taxes_shipping_checkout }}</div> -->
+
+            {%- assign fsbar_context = 'cart' -%}
+            {%- include 'free-shipping-bar' -%}
+
             <div class="cart__buttons-container">
               <div class="cart__submit-controls">
                 {%- unless section.settings.cart_ajax_enable -%}

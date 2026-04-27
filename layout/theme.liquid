@@ -426,6 +426,9 @@ FIX 6: ADD ORGANIZATION SCHEMA (Add before closing </head>)
     {% include 'cart-popup' %}
   {%- endif -%}
 
+  {%- assign fsbar_context = 'sticky' -%}
+  {%- include 'free-shipping-bar' -%}
+
   {% section 'header' %}
 
   <div class="page-container drawer-page-content" id="PageContainer">

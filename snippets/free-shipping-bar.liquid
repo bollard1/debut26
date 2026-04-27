@@ -1,0 +1,113 @@
+{%- if settings.free_shipping_bar_enabled -%}
+
+{%- assign fsbar_threshold1 = settings.free_shipping_threshold_1 | default: 50 -%}
+{%- assign fsbar_threshold2 = settings.free_shipping_threshold_2 | default: 0 -%}
+
+{%- comment -%} cart.total_price is in EUR cents {%- endcomment -%}
+{%- assign fsbar_cart_eur = cart.total_price | divided_by: 100.0 -%}
+
+{%- comment -%} Active threshold: tier2 if defined and cart >= tier1 {%- endcomment -%}
+{%- if fsbar_threshold2 > 0 and fsbar_cart_eur >= fsbar_threshold1 -%}
+  {%- assign fsbar_active = fsbar_threshold2 -%}
+{%- else -%}
+  {%- assign fsbar_active = fsbar_threshold1 -%}
+{%- endif -%}
+
+{%- assign fsbar_remaining = fsbar_active | minus: fsbar_cart_eur -%}
+{%- assign fsbar_remaining_rounded = fsbar_remaining | round: 2 -%}
+{%- assign fsbar_remaining_formatted = fsbar_remaining_rounded | append: ' €' -%}
+
+{%- assign fsbar_progress_raw = fsbar_cart_eur | divided_by: fsbar_active | times: 100.0 -%}
+{%- if fsbar_progress_raw > 100 -%}
+  {%- assign fsbar_pct = 100 -%}
+{%- elsif fsbar_progress_raw < 0 -%}
+  {%- assign fsbar_pct = 0 -%}
+{%- else -%}
+  {%- assign fsbar_pct = fsbar_progress_raw | round: 1 -%}
+{%- endif -%}
+
+{%- assign fsbar_achieved = false -%}
+{%- if fsbar_cart_eur >= fsbar_active -%}
+  {%- assign fsbar_achieved = true -%}
+{%- endif -%}
+
+{%- if fsbar_achieved -%}
+  {%- assign fsbar_message_rendered = settings.free_shipping_bar_achieved_message -%}
+{%- else -%}
+  {%- assign fsbar_message_rendered = settings.free_shipping_bar_message | replace: '{amount}', fsbar_remaining_formatted -%}
+{%- endif -%}
+
+{%- assign fsbar_modifier = '' -%}
+{%- if fsbar_context == 'sticky' -%}
+  {%- assign fsbar_modifier = 'free-shipping-bar--sticky' -%}
+{%- else -%}
+  {%- assign fsbar_modifier = 'free-shipping-bar--cart' -%}
+{%- endif -%}
+
+<style>
+  .free-shipping-bar {
+    background-color: {{ settings.free_shipping_bar_color_bg }};
+    padding: 6px 12px 8px;
+    text-align: center;
+  }
+  .free-shipping-bar--sticky {
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 9998;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .free-shipping-bar--cart {
+    border-radius: 4px;
+    margin-bottom: 14px;
+  }
+  .free-shipping-bar__message {
+    font-size: 12px;
+    color: {{ settings.free_shipping_bar_color_text }};
+    margin: 0 0 5px;
+    line-height: 1.3;
+  }
+  .free-shipping-bar__track {
+    height: 4px;
+    border-radius: 2px;
+    background-color: rgba(0,0,0,0.12);
+    overflow: hidden;
+  }
+  .free-shipping-bar__fill {
+    height: 100%;
+    border-radius: 2px;
+    background-color: {{ settings.free_shipping_bar_color_fill }};
+    width: {{ fsbar_pct }}%;
+    transition: width 0.4s ease;
+  }
+  @media (min-width: 768px) {
+    .free-shipping-bar { padding: 8px 16px 10px; }
+    .free-shipping-bar__message { font-size: 13px; margin-bottom: 6px; }
+    .free-shipping-bar__track { height: 6px; max-width: 480px; margin: 0 auto; }
+  }
+</style>
+
+<div
+  class="free-shipping-bar {{ fsbar_modifier }}"
+  data-free-shipping-bar
+  data-threshold1="{{ fsbar_threshold1 }}"
+  data-threshold2="{{ fsbar_threshold2 }}"
+  data-message="{{ settings.free_shipping_bar_message | escape }}"
+  data-achieved="{{ settings.free_shipping_bar_achieved_message | escape }}"
+  aria-live="polite"
+  role="status"
+>
+  <p class="free-shipping-bar__message" data-free-shipping-bar-message>
+    {{- fsbar_message_rendered -}}
+  </p>
+  <div class="free-shipping-bar__track" aria-hidden="true">
+    <div
+      class="free-shipping-bar__fill"
+      data-free-shipping-bar-fill
+      style="width: {{ fsbar_pct }}%"
+    ></div>
+  </div>
+</div>
+
+{%- endif -%}

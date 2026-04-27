@@ -7005,6 +7005,10 @@ theme.Cart = (function() {
       this.container.querySelector(
         selectors.cartSubtotal
       ).textContent = this._formatPriceWithBGN(calculatedSubtotal);
+
+      document.dispatchEvent(new CustomEvent('cart:updated', {
+        detail: { total_price: state.total_price || 0 }
+      }));
     },
 
     _createCartDiscountList: function(cart) {
@@ -7610,10 +7614,56 @@ theme.Cart = (function() {
 
       this.emptyPageContent.classList.remove(classes.hide);
       this.cartWrapper.classList.add(classes.hide);
+
+      document.dispatchEvent(new CustomEvent('cart:updated', {
+        detail: { total_price: 0 }
+      }));
     }
   });
 
   return Cart;
+})();
+
+theme.FreeShippingBar = (function() {
+  function formatEUR(amount) {
+    return amount.toFixed(2).replace('.', ',') + ' €';
+  }
+
+  function update(totalPriceCents) {
+    var bars = document.querySelectorAll('[data-free-shipping-bar]');
+    if (!bars.length) return;
+    var cartEUR = totalPriceCents / 100;
+
+    bars.forEach(function(bar) {
+      var fill    = bar.querySelector('[data-free-shipping-bar-fill]');
+      var message = bar.querySelector('[data-free-shipping-bar-message]');
+      if (!fill || !message) return;
+
+      var t1 = parseFloat(bar.getAttribute('data-threshold1')) || 0;
+      var t2 = parseFloat(bar.getAttribute('data-threshold2')) || 0;
+      var active = (t2 > 0 && cartEUR >= t1) ? t2 : t1;
+      if (active <= 0) return;
+
+      var pct = Math.min(100, Math.max(0, (cartEUR / active) * 100));
+      fill.style.width = pct.toFixed(1) + '%';
+
+      if (cartEUR >= active) {
+        message.textContent = bar.getAttribute('data-achieved') || '';
+      } else {
+        var rem = active - cartEUR;
+        var tmpl = bar.getAttribute('data-message') || '';
+        message.textContent = tmpl.replace('{amount}', formatEUR(rem));
+      }
+    });
+  }
+
+  function init() {
+    document.addEventListener('cart:updated', function(e) {
+      update(e.detail.total_price);
+    });
+  }
+
+  return { init: init, update: update };
 })();
 
 window.theme = window.theme || {};
@@ -9366,6 +9416,8 @@ document.addEventListener('DOMContentLoaded', function() {
   sections.register('hero-section', theme.HeroSection);
   sections.register('product-recommendations', theme.ProductRecommendations);
   sections.register('footer-section', theme.FooterSection);
+
+  theme.FreeShippingBar.init();
 
   theme.customerTemplates.init();
 
