@@ -1,0 +1,60 @@
+<style>
+div.seria {
+  background-color: lightblue;
+  width: ;
+  border: ;
+  padding: ;
+  margin: ;
+}
+</style>
+
+
+<p class="collection-description page-width fine-print1"><h1><center>СТЪПКА 2 - ИЗБЕРИ МОДЕЛ ТЕЛЕФОН:</center></h1></p>
+
+<p class="h2" align="center">Oppo</p>
+<div class="page-width seria">
+{% assign link = linklists.links %}
+{%- for link in linklists.oppo.links -%}
+<div class="grid__item small--one-third medium-up--one-fifth">
+<a href="{{ link.url }}"><h5>{{ link.title }}</h5></a>
+</div>
+{% endfor %}
+</div>
+
+&nbsp;&nbsp;
+
+<p class="h2" align="center">Oppo Серия FIND</p>
+<div class="page-width seria">
+{% assign link = linklists.links %}
+{%- for link in linklists.oppo-find.links -%}
+<div class="grid__item small--one-third medium-up--one-fifth">
+<a href="{{ link.url }}"><h5>{{ link.title }}</h5></a>
+</div>
+{% endfor %}
+</div>
+
+&nbsp;&nbsp;
+
+<p class="h2" align="center">Oppo Серия RENO</p>
+<div class="page-width seria">
+{% assign link = linklists.links %}
+{%- for link in linklists.oppo-reno.links -%}
+<div class="grid__item small--one-third medium-up--one-fifth">
+<a href="{{ link.url }}"><h5>{{ link.title }}</h5></a>
+</div>
+{% endfor %}
+</div>
+
+&nbsp;&nbsp;
+
+<p class="h2" align="center">Oppo Други</p>
+<div class="page-width seria">
+{% assign link = linklists.links %}
+{%- for link in linklists.oppo-other.links -%}
+<div class="grid__item small--one-third medium-up--one-fifth">
+<a href="{{ link.url }}"><h5>{{ link.title }}</h5></a>
+</div>
+{% endfor %}
+</div>
+
+&nbsp;&nbsp;

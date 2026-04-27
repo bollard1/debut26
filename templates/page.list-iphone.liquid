@@ -1,0 +1,23 @@
+<style>
+div.seria {
+  background-color: lightblue;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+</style>
+
+<p class="collection-description page-width fine-print1">
+  <h1><center>СТЪПКА 2 - ИЗБЕРИ МОДЕЛ ТЕЛЕФОН:</center></h1>
+</p>
+
+{%- for link in linklists.apple.links -%}
+  <p class="h2" align="center">{{ link.title }}</p>
+  <div class="page-width seria">
+    {%- for child_link in link.links -%}
+      <div class="grid__item small--one-third medium-up--one-fifth">
+        <a href="{{ child_link.url }}"><h5>{{ child_link.title }}</h5></a>
+      </div>
+    {%- endfor -%}
+  </div>
+  &nbsp;&nbsp;
+{%- endfor -%}

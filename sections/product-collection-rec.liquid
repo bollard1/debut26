@@ -1,0 +1,494 @@
+{% schema %}
+{
+  "name": "Multiple Collection 10",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable_section",
+      "label": "Enable Section",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "collections_count",
+      "label": "Number of Collections to Display",
+      "options": [
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" },
+        { "value": "5", "label": "5" },
+        { "value": "6", "label": "6" },
+        { "value": "7", "label": "7" },
+        { "value": "8", "label": "8" },
+        { "value": "9", "label": "9" },
+        { "value": "10", "label": "10" },
+        { "value": "11", "label": "11" },
+        { "value": "12", "label": "12" }
+      ],
+      "default": "1"
+    },
+    {
+      "type": "collection",
+      "id": "collection_1",
+      "label": "Collection 1"
+    },
+    {
+      "type": "number",
+      "id": "products_limit_1",
+      "label": "Number of products to display for Collection 1",
+      "default": 8
+    },
+    {
+      "type": "collection",
+      "id": "collection_2",
+      "label": "Collection 2"
+    },
+    {
+      "type": "number",
+      "id": "products_limit_2",
+      "label": "Number of products to display for Collection 2",
+      "default": 8
+    },
+    {
+      "type": "collection",
+      "id": "collection_3",
+      "label": "Collection 3"
+    },
+    {
+      "type": "number",
+      "id": "products_limit_3",
+      "label": "Number of products to display for Collection 3",
+      "default": 8
+    },
+    {
+      "type": "collection",
+      "id": "collection_4",
+      "label": "Collection 4"
+    },
+    {
+      "type": "number",
+      "id": "products_limit_4",
+      "label": "Number of products to display for Collection 4",
+      "default": 8
+    },
+    {
+      "type": "collection",
+      "id": "collection_5",
+      "label": "Collection 5"
+    },
+    {
+      "type": "number",
+      "id": "products_limit_5",
+      "label": "Number of products to display for Collection 5",
+      "default": 8
+    },
+    {
+      "type": "collection",
+      "id": "collection_6",
+      "label": "Collection 6"
+    },
+    {
+      "type": "number",
+      "id": "products_limit_6",
+      "label": "Number of products to display for Collection 6",
+      "default": 8
+    },
+    {
+      "type": "collection",
+      "id": "collection_7",
+      "label": "Collection 7"
+    },
+    {
+      "type": "number",
+      "id": "products_limit_7",
+      "label": "Number of products to display for Collection 7",
+      "default": 8
+    },
+    {
+      "type": "collection",
+      "id": "collection_8",
+      "label": "Collection 8"
+    },
+    {
+      "type": "number",
+      "id": "products_limit_8",
+      "label": "Number of products to display for Collection 8",
+      "default": 8
+    },
+    {
+      "type": "collection",
+      "id": "collection_9",
+      "label": "Collection 9"
+    },
+    {
+      "type": "number",
+      "id": "products_limit_9",
+      "label": "Number of products to display for Collection 9",
+      "default": 8
+    },
+    {
+      "type": "collection",
+      "id": "collection_10",
+      "label": "Collection 10"
+    },
+    {
+      "type": "number",
+      "id": "products_limit_10",
+      "label": "Number of products to display for Collection 10",
+      "default": 8
+    },
+    {
+      "type": "collection",
+      "id": "collection_11",
+      "label": "Collection 11"
+    },
+    {
+      "type": "number",
+      "id": "products_limit_11",
+      "label": "Number of products to display for Collection 11",
+      "default": 8
+    },
+    {
+      "type": "collection",
+      "id": "collection_12",
+      "label": "Collection 12"
+    },
+    {
+      "type": "number",
+      "id": "products_limit_12",
+      "label": "Number of products to display for Collection 12",
+      "default": 8
+    },
+    {
+      "type": "select",
+      "id": "sort_by",
+      "label": "Sort by",
+      "options": [
+        {
+          "value": "price-ascending",
+          "label": "Price, low to high"
+        },
+        {
+          "value": "price-descending",
+          "label": "Price, high to low"
+        },
+        {
+          "value": "best-selling",
+          "label": "Best selling"
+        }
+      ],
+      "default": "best-selling"
+    },
+    {
+      "type": "select",
+      "id": "view_type",
+      "label": "View Type",
+      "options": [
+        {
+          "value": "grid",
+          "label": "Grid"
+        },
+        {
+          "value": "slider",
+          "label": "Slider"
+        }
+      ],
+      "default": "grid"
+    }
+  ]
+}
+{% endschema %}
+
+{% if section.settings.enable_section %}
+<div class="multiple-collection-products-view" data-view-type="{{ section.settings.view_type }}">
+  <div class="container">
+    {% for i in (1..section.settings.collections_count) %}
+      {% assign collection_var = 'collection_' | append: i %}
+      {% assign products_limit_var = 'products_limit_' | append: i %}
+      
+      {% if section.settings[collection_var] %}
+        {% assign collection = collections[section.settings[collection_var]] %}
+        
+        {% assign current_product_in_collection = false %}
+        {% if template contains 'product' %}
+          {% for collection_handle in product.collections %}
+            {% if collection_handle.handle == collection.handle %}
+              {% assign current_product_in_collection = true %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+
+        {% unless current_product_in_collection %}
+          <h2 class="collection-title">{{ collection.title }}</h2>
+
+          {% assign sorted_products = collection.products %}
+          {% if section.settings.sort_by == 'price-ascending' %}
+            {% assign sorted_products = collection.products | sort: 'price' %}
+          {% elsif section.settings.sort_by == 'price-descending' %}
+            {% assign sorted_products = collection.products | sort: 'price' | reverse %}
+          {% elsif section.settings.sort_by == 'best-selling' %}
+            {% assign sorted_products = collection.products | sort: 'sales' | reverse %}
+          {% endif %}
+
+          {% assign available_products = sorted_products | where: 'available', true %}
+          {% assign continue_selling_products = sorted_products | where: 'inventory_policy', 'continue' %}
+          {% assign filtered_products = available_products | concat: continue_selling_products | uniq %}
+
+          {% if filtered_products.size > 0 %}
+            <div class="products-grid">
+              {% for product in filtered_products limit: section.settings[products_limit_var] %}
+                {% assign discount = product.compare_at_price | minus: product.price | times: 100 | divided_by: product.compare_at_price %}
+                <div class="product-card">
+                  <a href="{{ product.url }}">
+                    <div class="product-image">
+                      {% if product.featured_image %}
+                        <img src="{{ product.featured_image | img_url: 'medium' }}" alt="{{ product.title }}">
+                      {% endif %}
+                      {% if product.compare_at_price > product.price %}
+                        <span class="product-discount">{{ discount | round: 0 }}%</span>
+                      {% endif %}
+                    </div>
+                    <div class="product-details">
+                      <h3>{{ product.title }}</h3>
+                      <p class="product-price">{{ product.price | money }}</p>
+                      {% if product.compare_at_price > product.price %}
+                        <p class="product-compare-price">{{ product.compare_at_price | money }}</p>
+                      {% endif %}
+                    </div>
+                  </a>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div class="products-slider-container">
+              <div class="products-slider">
+                {% for product in filtered_products limit: section.settings[products_limit_var] %}
+                  {% assign discount = product.compare_at_price | minus: product.price | times: 100 | divided_by: product.compare_at_price %}
+                  <div class="product-slide">
+                    <a href="{{ product.url }}">
+                      <div class="product-image">
+                        {% if product.featured_image %}
+                          <img src="{{ product.featured_image | img_url: 'medium' }}" alt="{{ product.title }}">
+                        {% endif %}
+                        {% if product.compare_at_price > product.price %}
+                          <span class="product-discount">{{ discount | round: 0 }}%</span>
+                        {% endif %}
+                      </div>
+                      <div class="product-details">
+                        <h3>{{ product.title }}</h3>
+                        <p class="product-price">{{ product.price | money }}</p>
+                        {% if product.compare_at_price > product.price %}
+                          <p class="product-compare-price">{{ product.compare_at_price | money }}</p>
+                        {% endif %}
+                      </div>
+                    </a>
+                  </div>
+                {% endfor %}
+              </div>
+              <button class="slider-arrow left-arrow" aria-label="Previous">&#9664;</button>
+              <button class="slider-arrow right-arrow" aria-label="Next">&#9654;</button>
+            </div>
+
+          {% else %}
+            <p>No products found in this collection.</p>
+          {% endif %}
+        {% endunless %}
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<style>
+.multiple-collection-products-view .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.multiple-collection-products-view .collection-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 40px 0 20px; /* Added top margin */
+  text-align: left;
+  color: #333;
+}
+
+.multiple-collection-products-view .products-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.multiple-collection-products-view .product-card {
+  border: 1px solid #e1e1e1;
+  padding: 10px;
+  text-align: center;
+  flex: 1 0 21%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+  background: #fff;
+  position: relative;
+}
+
+.multiple-collection-products-view .product-card:hover {
+  transform: scale(1.05);
+}
+
+.multiple-collection-products-view .product-image img {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.multiple-collection-products-view .product-discount {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #e60000;
+  color: #fff;
+  padding: 5px 8px;
+  font-size: 12px;
+  border-radius: 3px;
+}
+
+.multiple-collection-products-view .product-details {
+  margin-bottom: 10px;
+}
+
+.multiple-collection-products-view .product-details h3 {
+  font-size: 14px;
+  margin: 10px 0;
+  color: #333;
+}
+
+.multiple-collection-products-view .product-details .product-price {
+  font-size: 14px;
+  color: #e60000;
+  margin: 5px 0;
+}
+
+.multiple-collection-products-view .product-details .product-compare-price {
+  font-size: 12px;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.multiple-collection-products-view .products-slider-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.multiple-collection-products-view .products-slider {
+  display: none;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  gap: 15px;
+}
+
+.multiple-collection-products-view[data-view-type="slider"] .products-grid {
+  display: none;
+}
+
+.multiple-collection-products-view[data-view-type="slider"] .products-slider {
+  display: flex;
+}
+
+.multiple-collection-products-view .product-slide {
+  flex: 0 0 auto;
+  width: 250px;
+  border: 1px solid #e1e1e1;
+  padding: 10px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+  background: #fff;
+  position: relative;
+}
+
+.multiple-collection-products-view .product-slide:hover {
+  transform: scale(1.05);
+}
+
+.multiple-collection-products-view .product-slide .product-image img {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.multiple-collection-products-view .product-slide .product-discount {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #e60000;
+  color: #fff;
+  padding: 5px 8px;
+  font-size: 12px;
+  border-radius: 3px;
+}
+
+.multiple-collection-products-view .product-slide .product-details {
+  margin-bottom: 10px;
+}
+
+.multiple-collection-products-view .product-slide .product-details h3 {
+  font-size: 14px;
+  margin: 10px 0;
+  color: #333;
+}
+
+.multiple-collection-products-view .product-slide .product-details .product-price {
+  font-size: 14px;
+  color: #e60000;
+  margin: 5px 0;
+}
+
+.multiple-collection-products-view .product-slide .product-details .product-compare-price {
+  font-size: 12px;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.slider-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.left-arrow {
+  left: 0;
+}
+
+.right-arrow {
+  right: 0;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const sliders = document.querySelectorAll('.products-slider');
+  const leftArrows = document.querySelectorAll('.left-arrow');
+  const rightArrows = document.querySelectorAll('.right-arrow');
+
+  leftArrows.forEach((leftArrow, index) => {
+    leftArrow.addEventListener('click', () => {
+      sliders[index].scrollBy({ left: -250, behavior: 'smooth' });
+    });
+  });
+
+  rightArrows.forEach((rightArrow, index) => {
+    rightArrow.addEventListener('click', () => {
+      sliders[index].scrollBy({ left: 250, behavior: 'smooth' });
+    });
+  });
+});
+</script>
+
+
+

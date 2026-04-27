@@ -1,0 +1,39 @@
+{% for product in collection.products %}
+  <div class="product-card">
+    <a href="{{ product.url }}">
+      <div class="product-image">
+        {% if product.featured_image %}
+          <img 
+            src="{{ product.featured_image | img_url: '400x400', crop: 'center' }}"
+            alt="{{ product.title }}"
+            loading="lazy"
+            width="400"
+            height="400"
+          >
+        {% endif %}
+        
+        {% if product.compare_at_price > product.price %}
+          {% assign savings = product.compare_at_price | minus: product.price | times: 100.0 | divided_by: product.compare_at_price | round %}
+          <span class="product-discount">-{{ savings }}%</span>
+        {% endif %}
+      </div>
+      
+      <div class="product-details">
+        <h3>{{ product.title }}</h3>
+        
+        <div class="price-box">
+          {% if product.compare_at_price > product.price %}
+            <span class="compare-at-price">{{ product.compare_at_price | money }}</span>
+          {% endif %}
+          <span class="price">{{ product.price | money }}</span>
+        </div>
+        {% assign savings = product.compare_at_price | minus: product.price | times: 100.0 | divided_by: product.compare_at_price | round %}
+        {% if savings > 0 %}
+          <div class="savings">
+            <span class="savings-text">СПЕСТЯВАШ {{ savings }}%</span>
+          </div>
+        {% endif %}
+      </div>
+    </a>
+  </div>
+{% endfor %}

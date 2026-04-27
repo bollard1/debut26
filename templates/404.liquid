@@ -1,0 +1,13 @@
+<div class="page-width">
+  <div class="empty-page-content text-center">
+    <h1>{{ 'general.404.title' | t }}</h1>
+    <p>{{ 'general.404.subtext' | t }}</p>
+    <p>
+      <a href="{{ routes.root_url }}" class="btn btn--has-icon-after">{{ 'general.404.link' | t }}{% include 'icon-arrow-right' %}</a>
+    </p>
+    <div id="rtgre_623c6b2d61d2cd0e9f68c73d" data-rtginfo="404_page_rrp"></div>
+    <div id="rtgre_623c6b56a302b2032666bc24" data-rtginfo="404_page_browse_related"></div>
+    <div id="rtgre_623c6d3229686675f20965e2" data-rtginfo="404_page_most_popular"></div>
+  </div>
+</div>
+{%- comment -%}smartseo_integration_begin{%- endcomment -%}{{ 'smart-seo-broken-link-detection.js' | asset_url | script_tag }}{%- comment -%}smartseo_integration_end{%- endcomment -%}

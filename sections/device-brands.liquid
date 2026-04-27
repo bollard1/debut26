@@ -1,0 +1,152 @@
+{% schema %}
+{
+  "name": "Brand Selection",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section Title",
+      "default": "Step 1 - Choose Phone Brand"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "brand",
+      "name": "Brand",
+      "settings": [
+        {
+          "type": "text",
+          "id": "brand_name",
+          "label": "Brand Name"
+        },
+        {
+          "type": "url",
+          "id": "brand_link",
+          "label": "Brand Link"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Default",
+      "category": "Custom",
+      "settings": {},
+      "blocks": [
+        { "type": "brand", "settings": { "brand_name": "Samsung", "brand_link": "https://topmag.bg/pages/sam/" }},
+        { "type": "brand", "settings": { "brand_name": "Apple", "brand_link": "https://topmag.bg/pages/iph/" }},
+        { "type": "brand", "settings": { "brand_name": "Xiaomi", "brand_link": "https://topmag.bg/pages/xia/" }},
+        { "type": "brand", "settings": { "brand_name": "Huawei", "brand_link": "https://topmag.bg/pages/hua/" }},
+        { "type": "brand", "settings": { "brand_name": "Honor", "brand_link": "https://topmag.bg/pages/honor/" }},
+        { "type": "brand", "settings": { "brand_name": "MOTO", "brand_link": "https://topmag.bg/pages/motorola" }},
+        { "type": "brand", "settings": { "brand_name": "Nokia", "brand_link": "https://topmag.bg/pages/nokia/" }},
+        { "type": "brand", "settings": { "brand_name": "One+", "brand_link": "https://topmag.bg/pages/oneplus/" }},
+        { "type": "brand", "settings": { "brand_name": "Oppo", "brand_link": "https://topmag.bg/pages/oppo/" }},
+        { "type": "brand", "settings": { "brand_name": "Vivo", "brand_link": "https://topmag.bg/pages/vivo/" }},
+        { "type": "brand", "settings": { "brand_name": "Google", "brand_link": "https://topmag.bg/pages/google/" }},
+        { "type": "brand", "settings": { "brand_name": "TCL", "brand_link": "https://topmag.bg/pages/tcl/" }},
+        { "type": "brand", "settings": { "brand_name": "Realme", "brand_link": "https://topmag.bg/pages/realme/" }},
+        { "type": "brand", "settings": { "brand_name": "LG", "brand_link": "https://topmag.bg/pages/lg/" }},
+        { "type": "brand", "settings": { "brand_name": "Lenovo", "brand_link": "https://topmag.bg/collections/lenovo/" }},
+        { "type": "brand", "settings": { "brand_name": "Asus", "brand_link": "https://topmag.bg/collections/asus/" }},
+        { "type": "brand", "settings": { "brand_name": "HTC", "brand_link": "https://topmag.bg/collections/htc/" }},
+        { "type": "brand", "settings": { "brand_name": "ZTE", "brand_link": "https://topmag.bg/collections/zte/" }},
+        { "type": "brand", "settings": { "brand_name": "Alcatel", "brand_link": "https://topmag.bg/collections/alcatel/" }},
+        { "type": "brand", "settings": { "brand_name": "Wiko", "brand_link": "https://topmag.bg/collections/wiko/" }},
+        { "type": "brand", "settings": { "brand_name": "CAT", "brand_link": "https://topmag.bg/collections/cat/" }},
+        { "type": "brand", "settings": { "brand_name": "NINTENDO", "brand_link": "https://topmag.bg/collections/NINTENDO/" }},
+        { "type": "brand", "settings": { "brand_name": "Garmin", "brand_link": "https://topmag.bg/collections/garmin/" }},
+        { "type": "brand", "settings": { "brand_name": "Nothing", "brand_link": "https://topmag.bg/collections/nothing-phone/" }},
+        { "type": "brand", "settings": { "brand_name": "Infinix", "brand_link": "https://topmag.bg/collections/infinix" }},
+        { "type": "brand", "settings": { "brand_name": "MyPhone", "brand_link": "https://topmag.bg/collections/myphone/" }},
+        { "type": "brand", "settings": { "brand_name": "Microsoft", "brand_link": "https://topmag.bg/collections/microsoft/" }},
+        { "type": "brand", "settings": { "brand_name": "Amazon", "brand_link": "https://topmag.bg/collections/amazon/" }}
+      ]
+    }
+  ]
+}
+{% endschema %}
+
+<style>
+  .brand-selection {
+    text-align: center;
+    padding: 20px;
+    background-color: white;
+    color: rgb(63, 85, 108);
+    max-width: 1200px; /* Fixed width for desktop */
+    margin: 0 auto; /* Center align the section */
+  }
+
+  .brand-selection h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: rgb(63, 85, 108);
+  }
+
+  .brand-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .brand-card {
+    background-color: white;
+    border: 1px solid rgb(54, 150, 246);
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    justify-content: center;
+    text-decoration: none; /* Ensure links look like cards */
+  }
+
+  .brand-card span {
+    font-size: 18px; /* Increased font size for better readability */
+    font-weight: bold;
+    color: rgb(54, 150, 246);
+  }
+
+  .brand-card:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+  }
+
+  @media (min-width: 1024px) {
+    .brand-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .brand-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .brand-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .brand-card span {
+      font-size: 16px; /* Adjusted font size for smaller screens */
+    }
+  }
+</style>
+
+<div class="brand-selection">
+  <h2>{{ section.settings.section_title }}</h2>
+  <div class="brand-grid">
+    {% for block in section.blocks %}
+    <a href="{{ block.settings.brand_link }}" class="brand-card" data-brand="{{ block.settings.brand_name }}">
+      <span>{{ block.settings.brand_name }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</div>
