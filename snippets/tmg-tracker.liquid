@@ -125,7 +125,7 @@
     product_handle: {{ product.handle | json }},
     product_title:  {{ product.title | json }},
     variant_id: {{ product.selected_or_first_available_variant.id | json }},
-    price: {{ product.selected_or_first_available_variant.price | money_without_currency | json }}
+    price: {{ product.selected_or_first_available_variant.price | json }}
   });
   {% endif %}
 
@@ -174,24 +174,33 @@
   };
   XMLHttpRequest.prototype.send = function(body) {
     var url = this._tmgUrl;
-    if (url && isRelativeUrl(url) && typeof body === 'string') {
-      try {
-        if (isCartAdd(url)) {
-          var xAddB = JSON.parse(body);
-          var xItems = xAddB.items || [{id: xAddB.id, quantity: xAddB.quantity || 1}];
-          if (xItems[0] && xItems[0].id) {
-            ev('add_to_cart', {
-              variant_id: String(xItems[0].id),
-              quantity: xItems[0].quantity || 1
-            });
+    if (url && isRelativeUrl(url)) {
+      var bodyStr = null;
+      if (typeof body === 'string') {
+        bodyStr = body;
+      } else if (typeof FormData !== 'undefined' && body instanceof FormData && body.get) {
+        var fdId = body.get('id'), fdQty = body.get('quantity');
+        if (fdId) bodyStr = JSON.stringify({id: fdId, quantity: parseInt(fdQty, 10) || 1});
+      }
+      if (bodyStr) {
+        try {
+          if (isCartAdd(url)) {
+            var xAddB = JSON.parse(bodyStr);
+            var xItems = xAddB.items || [{id: xAddB.id, quantity: xAddB.quantity || 1}];
+            if (xItems[0] && xItems[0].id) {
+              ev('add_to_cart', {
+                variant_id: String(xItems[0].id),
+                quantity: xItems[0].quantity || 1
+              });
+            }
+          } else if (isCartChange(url)) {
+            var xChgB = JSON.parse(bodyStr);
+            if (parseInt(xChgB.quantity, 10) === 0) {
+              ev('remove_from_cart', {variant_id: String(xChgB.id || xChgB.line || '')});
+            }
           }
-        } else if (isCartChange(url)) {
-          var xChgB = JSON.parse(body);
-          if (parseInt(xChgB.quantity, 10) === 0) {
-            ev('remove_from_cart', {variant_id: String(xChgB.id || xChgB.line || '')});
-          }
-        }
-      } catch(e) {}
+        } catch(e) {}
+      }
     }
     return _origSend.apply(this, arguments);
   };
