@@ -14,15 +14,22 @@
   var EP_ID = 'https://topmag.cc/t/identify';
   var STORE = 'TOPMAG';
 
-  // ── localStorage helpers (handle private browsing / quota exceeded) ──────────
-  function safeGet(k) {
-    try { return localStorage.getItem(k); } catch(e) { return null; }
+  // ── Storage helpers (localStorage default; pass 'session' for sessionStorage) ─
+  function safeGet(k, type) {
+    try {
+      return (type === 'session' ? sessionStorage : localStorage).getItem(k);
+    } catch(e) { return null; }
   }
-  function safeSet(k, v) {
-    try { localStorage.setItem(k, v); return true; } catch(e) { return false; }
+  function safeSet(k, v, type) {
+    try {
+      (type === 'session' ? sessionStorage : localStorage).setItem(k, v);
+      return true;
+    } catch(e) { return false; }
   }
-  function safeRemove(k) {
-    try { localStorage.removeItem(k); } catch(e) {}
+  function safeRemove(k, type) {
+    try {
+      (type === 'session' ? sessionStorage : localStorage).removeItem(k);
+    } catch(e) {}
   }
 
   // ── UUID generator (with high-entropy fallback for older browsers) ───────────
@@ -55,15 +62,44 @@
     safeSet('_tmg_vid', vid);
   }
 
-  // ── Capture URL params (UTM + Mautic identification) ─────────────────────────
-  var qs = new URLSearchParams(location.search);
+  // ── Capture URL params (UTM + click IDs + Mautic identification) ─────────────
+  var qs  = new URLSearchParams(location.search);
+
+  // Last-touch: always from current URL (backward compatible — same field names)
   var utm = {};
   ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(function(k) {
     if (qs.get(k)) utm[k] = qs.get(k);
   });
   if (qs.get('fbclid')) utm.fbclid = qs.get('fbclid');
   if (qs.get('gclid'))  utm.gclid  = qs.get('gclid');
+
   var mid = qs.get('mid') || null;
+
+  // Mautic email click (?mid= present, no UTMs) → synthesize email attribution
+  if (mid && Object.keys(utm).length === 0) {
+    utm.utm_source = 'email';
+    utm.utm_medium = 'email';
+  }
+
+  // First-touch: persist to sessionStorage once per tab-session on first attributed page.
+  // All subsequent events in the same tab carry first_* fields even without URL params.
+  var UTM_FIRST_KEY = 'tmg_utm_first';
+  var utmFirst = {};
+  (function() {
+    var hasAttribution = Object.keys(utm).length > 0;
+    if (hasAttribution && !safeGet(UTM_FIRST_KEY, 'session')) {
+      safeSet(UTM_FIRST_KEY, JSON.stringify(utm), 'session');
+    }
+    var raw = safeGet(UTM_FIRST_KEY, 'session');
+    if (raw) {
+      try {
+        var parsed = JSON.parse(raw);
+        Object.keys(parsed).forEach(function(k) {
+          utmFirst['first_' + k] = parsed[k];
+        });
+      } catch(e) {}
+    }
+  })();
 
   // ── Cart URL matchers (strict — avoids false positives on /cart/add-on, etc.) ─
   function isCartAdd(url)    { return /\/cart\/add(\.js|$|\?|\/)/.test(url); }
@@ -103,7 +139,7 @@
       event_id: newUUID(),
       page_type: '{{ request.page_type }}',
       url: location.pathname
-    }, utm, extra || {}));
+    }, utmFirst, utm, extra || {}));
   }
 
   // ── Identity (only fire once per changed value) ──────────────────────────────
