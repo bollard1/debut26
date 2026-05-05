@@ -1,6 +1,15 @@
 <script>
 (function() {
   'use strict';
+{% if settings.tmg_consent_gate_enabled %}
+  try {
+    var _cp = window.Shopify && window.Shopify.customerPrivacy;
+    if (_cp) {
+      var _st = _cp.getConsentStatus ? _cp.getConsentStatus() : null;
+      if (_st && _st.analytics === false) return;
+    }
+  } catch(e) {}
+{% endif %}
   var EP_EV = 'https://topmag.cc/t/event';
   var EP_ID = 'https://topmag.cc/t/identify';
   var STORE = 'TOPMAG';
@@ -224,5 +233,26 @@
       beacon(EP_ID, {visitor_id: vid, email: emailVal, store: STORE, via: 'email_form'});
     }
   });
+
+  // ── Checkout started detection ────────────────────────────────────────────────
+  document.addEventListener('submit', function(e) {
+    var form = e.target;
+    if (form && typeof form.action === 'string'
+        && form.action.indexOf('/cart/checkout') !== -1) {
+      ev('checkout_started', {url: '/cart/checkout'});
+    }
+  }, true);
+  document.addEventListener('click', function(e) {
+    var el = e.target;
+    while (el && el !== document) {
+      if (el.tagName === 'A' && typeof el.href === 'string'
+          && el.href.indexOf('/cart/checkout') !== -1) {
+        ev('checkout_started', {url: '/cart/checkout'});
+        break;
+      }
+      el = el.parentElement;
+    }
+  }, true);
+
 })();
 </script>

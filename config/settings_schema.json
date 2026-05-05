@@ -1927,5 +1927,17 @@
         "default": "#333333"
       }
     ]
+  },
+  {
+    "name": "CDP Tracking",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "tmg_consent_gate_enabled",
+        "label": "Enable GDPR consent gate",
+        "info": "Enable when selling to EU customers. Tracker will require visitor analytics consent before firing.",
+        "default": false
+      }
+    ]
   }
 ]
