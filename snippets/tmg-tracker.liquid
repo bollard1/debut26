@@ -1,0 +1,219 @@
+<script>
+(function() {
+  'use strict';
+  var EP_EV = 'https://topmag.cc/t/event';
+  var EP_ID = 'https://topmag.cc/t/identify';
+  var STORE = 'TOPMAG';
+
+  // ── localStorage helpers (handle private browsing / quota exceeded) ──────────
+  function safeGet(k) {
+    try { return localStorage.getItem(k); } catch(e) { return null; }
+  }
+  function safeSet(k, v) {
+    try { localStorage.setItem(k, v); return true; } catch(e) { return false; }
+  }
+  function safeRemove(k) {
+    try { localStorage.removeItem(k); } catch(e) {}
+  }
+
+  // ── UUID generator (with high-entropy fallback for older browsers) ───────────
+  function newUUID() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    var perf = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+    return Date.now().toString(36)
+        + '-' + Math.random().toString(36).slice(2, 10)
+        + Math.random().toString(36).slice(2, 10)
+        + Math.floor(perf * 1000).toString(36);
+  }
+
+  // ── Shared device handling: reset visitor identity if customer changed ───────
+  // If the browser was previously logged in as customer A and is now customer B,
+  // we must NOT reuse A's visitor_id; A's history shouldn't merge with B.
+  {% if customer.id %}
+  var seenCid = safeGet('_tmg_cid');
+  var liveCid = {{ customer.id | json }};
+  if (seenCid && seenCid !== String(liveCid)) {
+    ['_tmg_vid', '_tmg_mid', '_tmg_email', '_tmg_cid'].forEach(safeRemove);
+  }
+  {% endif %}
+
+  // ── Persistent visitor ID ────────────────────────────────────────────────────
+  var vid = safeGet('_tmg_vid');
+  if (!vid) {
+    vid = newUUID();
+    safeSet('_tmg_vid', vid);
+  }
+
+  // ── Capture URL params (UTM + Mautic identification) ─────────────────────────
+  var qs = new URLSearchParams(location.search);
+  var utm = {};
+  ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(function(k) {
+    if (qs.get(k)) utm[k] = qs.get(k);
+  });
+  if (qs.get('fbclid')) utm.fbclid = qs.get('fbclid');
+  if (qs.get('gclid'))  utm.gclid  = qs.get('gclid');
+  var mid = qs.get('mid') || null;
+
+  // ── Cart URL matchers (strict — avoids false positives on /cart/add-on, etc.) ─
+  function isCartAdd(url)    { return /\/cart\/add(\.js|$|\?|\/)/.test(url); }
+  function isCartChange(url) { return /\/cart\/change(\.js|$|\?|\/)/.test(url); }
+  function isRelativeUrl(url) {
+    if (typeof url !== 'string' || !url) return false;
+    // True for relative URLs and same-origin absolute URLs to current host
+    return url.charAt(0) === '/' || url.indexOf(location.origin) === 0;
+  }
+
+  // ── Beacon helper with fetch fallback when sendBeacon returns false ──────────
+  function beacon(url, body) {
+    var json = JSON.stringify(body);
+    var sent = false;
+    if (navigator.sendBeacon) {
+      try {
+        sent = navigator.sendBeacon(url, new Blob([json], {type: 'application/json'}));
+      } catch(e) {}
+    }
+    if (!sent && typeof fetch === 'function') {
+      try {
+        fetch(url, {
+          method: 'POST',
+          body: json,
+          headers: {'Content-Type': 'application/json'},
+          keepalive: true,
+          mode: 'cors',
+          credentials: 'omit'
+        });
+      } catch(e) {}
+    }
+  }
+
+  function ev(type, extra) {
+    beacon(EP_EV, Object.assign({
+      type: type, store: STORE, visitor_id: vid,
+      event_id: newUUID(),
+      page_type: '{{ request.page_type }}',
+      url: location.pathname
+    }, utm, extra || {}));
+  }
+
+  // ── Identity (only fire once per changed value) ──────────────────────────────
+  if (mid && safeGet('_tmg_mid') !== mid) {
+    safeSet('_tmg_mid', mid);
+    beacon(EP_ID, {visitor_id: vid, mautic_id: mid, store: STORE, via: 'mautic_param'});
+  }
+  {% if customer.id %}
+  var cid = String({{ customer.id | json }});
+  if (safeGet('_tmg_cid') !== cid) {
+    safeSet('_tmg_cid', cid);
+    beacon(EP_ID, {visitor_id: vid, customer_id: cid, store: STORE, via: 'shopify_login'});
+  }
+  {% endif %}
+
+  // ── Page events ──────────────────────────────────────────────────────────────
+  ev('page_viewed');
+
+  {% if request.page_type == 'collection' %}
+  ev('collection_viewed', {
+    collection_handle: {{ collection.handle | json }},
+    collection_title:  {{ collection.title | json }}
+  });
+  {% endif %}
+
+  {% if request.page_type == 'product' %}
+  ev('product_viewed', {
+    product_handle: {{ product.handle | json }},
+    product_title:  {{ product.title | json }},
+    variant_id: {{ product.selected_or_first_available_variant.id | json }},
+    price: {{ product.selected_or_first_available_variant.price | money_without_currency | json }}
+  });
+  {% endif %}
+
+  // ── Cart interception — fetch (Debut v17 and modern themes) ──────────────────
+  // Only intercept relative/same-origin Shopify cart URLs to avoid touching
+  // third-party requests (Meta Pixel, Google Analytics, Intercom, etc.)
+  var _origFetch = window.fetch;
+  if (typeof _origFetch === 'function') {
+    window.fetch = function(input, opts) {
+      var url = (typeof input === 'string') ? input : (input && input.url) || '';
+      if (isRelativeUrl(url)) {
+        try {
+          if (isCartAdd(url)) {
+            var body = (opts && opts.body) || (input && input.body) || '{}';
+            if (typeof body === 'string') {
+              var addB = JSON.parse(body);
+              var items = addB.items || [{id: addB.id, quantity: addB.quantity || 1}];
+              if (items[0] && items[0].id) {
+                ev('add_to_cart', {
+                  variant_id: String(items[0].id),
+                  quantity: items[0].quantity || 1
+                });
+              }
+            }
+          } else if (isCartChange(url)) {
+            var body2 = (opts && opts.body) || (input && input.body) || '{}';
+            if (typeof body2 === 'string') {
+              var chgB = JSON.parse(body2);
+              if (parseInt(chgB.quantity, 10) === 0) {
+                ev('remove_from_cart', {variant_id: String(chgB.id || chgB.line || '')});
+              }
+            }
+          }
+        } catch(e) { /* swallow — never break the original request */ }
+      }
+      return _origFetch.apply(this, arguments);
+    };
+  }
+
+  // ── Cart interception — XHR with JSON body (older themes / jQuery $.ajax) ────
+  var _origOpen = XMLHttpRequest.prototype.open;
+  var _origSend = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.open = function(method, url) {
+    this._tmgUrl = (typeof url === 'string') ? url : '';
+    return _origOpen.apply(this, arguments);
+  };
+  XMLHttpRequest.prototype.send = function(body) {
+    var url = this._tmgUrl;
+    if (url && isRelativeUrl(url) && typeof body === 'string') {
+      try {
+        if (isCartAdd(url)) {
+          var xAddB = JSON.parse(body);
+          var xItems = xAddB.items || [{id: xAddB.id, quantity: xAddB.quantity || 1}];
+          if (xItems[0] && xItems[0].id) {
+            ev('add_to_cart', {
+              variant_id: String(xItems[0].id),
+              quantity: xItems[0].quantity || 1
+            });
+          }
+        } else if (isCartChange(url)) {
+          var xChgB = JSON.parse(body);
+          if (parseInt(xChgB.quantity, 10) === 0) {
+            ev('remove_from_cart', {variant_id: String(xChgB.id || xChgB.line || '')});
+          }
+        }
+      } catch(e) {}
+    }
+    return _origSend.apply(this, arguments);
+  };
+
+  // ── Email form interception — newsletter forms only, not login ───────────────
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var SKIP_FORM_PATTERNS = ['/account/login', '/account/recover', '/account/register'];
+  document.addEventListener('submit', function(e) {
+    var form = e.target;
+    if (!form || !form.action) return;
+    var action = String(form.action).toLowerCase();
+    for (var i = 0; i < SKIP_FORM_PATTERNS.length; i++) {
+      if (action.indexOf(SKIP_FORM_PATTERNS[i]) !== -1) return;
+    }
+    var inp = form.querySelector('input[type="email"]');
+    if (!inp || !inp.value) return;
+    var emailVal = inp.value.trim().toLowerCase();
+    if (!EMAIL_RE.test(emailVal)) return;
+    if (safeGet('_tmg_email') !== emailVal) {
+      safeSet('_tmg_email', emailVal);
+      beacon(EP_ID, {visitor_id: vid, email: emailVal, store: STORE, via: 'email_form'});
+    }
+  });
+})();
+</script>
