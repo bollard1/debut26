@@ -70,8 +70,25 @@
   ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(function(k) {
     if (qs.get(k)) utm[k] = qs.get(k);
   });
-  if (qs.get('fbclid')) utm.fbclid = qs.get('fbclid');
-  if (qs.get('gclid'))  utm.gclid  = qs.get('gclid');
+  // Ad click IDs — persisted in localStorage so they survive page navigation
+  var AD_IDS_KEY = 'tmg_ad_ids';
+  var adIds = {};
+  ['fbclid','gclid','ttclid','twclid'].forEach(function(k) {
+    if (qs.get(k)) adIds[k] = qs.get(k);
+  });
+  // Meta ads internal IDs (when advertiser includes them as utm_content or custom params)
+  if (qs.get('ad_id'))       adIds.meta_ad_id       = qs.get('ad_id');
+  if (qs.get('campaign_id')) adIds.meta_campaign_id = qs.get('campaign_id');
+  if (qs.get('adset_id'))    adIds.meta_adset_id    = qs.get('adset_id');
+  // Persist (merge with existing — never overwrite captured IDs unless new one comes)
+  try {
+    var stored = JSON.parse(safeGet(AD_IDS_KEY) || '{}');
+    Object.keys(adIds).forEach(function(k) { stored[k] = adIds[k]; });
+    if (Object.keys(stored).length) safeSet(AD_IDS_KEY, JSON.stringify(stored));
+    adIds = stored;
+  } catch(e) {}
+  // Merge into utm payload (these will go to /t/event and /t/identify)
+  Object.keys(adIds).forEach(function(k) { utm[k] = adIds[k]; });
 
   var mid = qs.get('mid') || null;
 
